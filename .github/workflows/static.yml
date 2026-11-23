@@ -1,59 +1,52 @@
-# Deploy the packaged EEZ Studio manual to GitHub Pages
 name: Publish EEZ Studio manual
 
-
 on:
-  # Runs on pushes targeting the default branch
   push:
-    branches: ["main"]
+    branches: [main]
     paths:
-      - "manual-*.zip"
-      - ".github/workflows/static.yml"
-
-
-  # Allows you to run this workflow manually from the Actions tab
+      - eez-studio-ru.zip
+      - .github/workflows/static.yml
   workflow_dispatch:
 
-
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
 concurrency:
-  group: "pages"
+  group: pages
   cancel-in-progress: false
-
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: read
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.1
-      - name: Setup Pages
+        with:
+          persist-credentials: false
+      - name: Set up Pages
         uses: actions/configure-pages@v6.0.0
       - name: Unpack the manual
+        shell: pwsh
         run: |
-          mkdir site
-          unzip -q manual-1.zip -d site
-          unzip -q manual-2.zip -d site
-          test -f site/index.html
-      - name: Upload artifact
+          Expand-Archive -LiteralPath eez-studio-ru.zip -DestinationPath site
+          if (!(Test-Path -LiteralPath site/index.html -PathType Leaf)) {
+            throw 'The manual archive is missing its root index.html.'
+          }
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5
         with:
           path: site
 
   deploy:
     needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
