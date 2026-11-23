@@ -1,4 +1,5 @@
-name: Publish EEZ Studio manual
+name: Publish EEZ Studio Manual
+run-name: Publish EEZ Studio Manual
 
 on:
   push:
